@@ -8,6 +8,8 @@ YOLOv5目标检测实验项目
 
 本仓库存放自制数据集、实验截图、ROS2业务代码。
 
+本模型实现三类目标检测：杯子、鼠标、眼镜。
+
 YOLOv5原始源码不在本仓库，请自行下载官方YOLOv5。
 
 
@@ -18,7 +20,7 @@ YOLOv5原始源码不在本仓库，请自行下载官方YOLOv5。
 
 2\. Python依赖按照YOLOv5官方requirements.txt安装
 
-3\. 训练权重best.pt：网盘链接【后续补充】
+3\. 训练权重best.pt
 
 
 
@@ -46,11 +48,19 @@ jetson\_ros2\_object\_detect
 
 
 
+\## 训练结果
+
+检测类别：杯子、鼠标、眼镜
+
+训练曲线图、PR曲线、验证集检测效果图存放于 test\_case 文件夹。
+
+训练权重 best.pt
+
+
+
 \## JETSON部署
 
 1\. 将best.pt转为TensorRT engine模型
 
 2\. 运行ROS2节点完成目标检测推理
-
-
 
