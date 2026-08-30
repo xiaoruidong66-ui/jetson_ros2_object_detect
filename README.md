@@ -58,6 +58,14 @@ jetson\_ros2\_object\_detect
 
 
 
+\## 数据集制作
+
+\- 使用LabelImg工具对图片进行标注，生成xml标签，转换为yolo格式txt标签。
+
+\- 使用本仓库scripts目录下的划分脚本，自动将数据集切分为训练集、验证集。
+
+
+
 \## 运行环境与依赖
 
 训练平台：PC端，YOLOv5‑v7.0
@@ -74,11 +82,13 @@ jetson\_ros2\_object\_detect
 
 1\. clone YOLOv5官方代码仓库
 
-2\. 使用本仓库dataset下数据集，使用config中的yaml配置文件
+2\. 使用LabelImg进行标注，或者直接使用本仓库dataset数据集；可运行scripts下的划分脚本拆分训练/验证集
 
-3\. 执行训练得到best.pt权重
+3\. 使用config中的yaml配置文件
 
-4\. 通过MobaXterm将权重传输至Jetson Nano，导出TensorRT engine模型进行推理
+4\. 执行训练得到best.pt权重
+
+5\. 通过MobaXterm将权重传输至Jetson Nano，导出TensorRT engine模型进行推理
 
 
 
