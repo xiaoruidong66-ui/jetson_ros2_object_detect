@@ -54,7 +54,37 @@ jetson\_ros2\_object\_detect
 
 训练曲线图、PR曲线、验证集检测效果图存放于 test\_case 文件夹。
 
-训练权重 best.pt
+训练权重 best.pt：本仓库不存放模型权重文件。权重生成路径为 yolov5‑master/runs/train/exp5/weights/best.pt，部署时使用MobaXterm传输至Jetson Nano开发板使用。
+
+
+
+\## 运行环境与依赖
+
+训练平台：PC端，YOLOv5‑v7.0
+
+依赖：PyTorch, torchvision, opencv‑python, numpy
+
+开发板部署平台：Jetson Nano
+
+部署依赖：JetPack, TensorRT, ROS2, pycuda
+
+
+
+复现步骤：
+
+1\. clone YOLOv5官方代码仓库
+
+2\. 使用本仓库dataset下数据集，使用config中的yaml配置文件
+
+3\. 执行训练得到best.pt权重
+
+4\. 通过MobaXterm将权重传输至Jetson Nano，导出TensorRT engine模型进行推理
+
+
+
+\## ROS2推理节点
+
+ROS2推理代码待开发，部署于Jetson Nano开发板，实现摄像头读取、目标检测、检测框话题发布。
 
 
 
