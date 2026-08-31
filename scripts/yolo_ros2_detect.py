@@ -17,12 +17,17 @@ class YoloDetectNode(Node):
     def __init__(self):
         super().__init__("yolo_detect_node")
         self.pub = self.create_publisher(String, "/yolo_detect_result", 10)
-        # Jetson如果CUDA报错，把下面改成 providers=["CPUExecutionProvider"]
+        
         self.session = ort.InferenceSession(ONNX_PATH, providers=["CUDAExecutionProvider"])
         self.input_name = self.session.get_inputs()[0].name
         self.output_name = self.session.get_outputs()[0].name
 
         self.cap = cv2.VideoCapture("/dev/video0")
+        # 摄像头硬件参数优化，降低分辨率提帧
+        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+        self.cap.set(cv2.CAP_PROP_FPS, 30)
+        
         if not self.cap.isOpened():
             self.get_logger().error("摄像头打开失败")
             raise SystemExit(1)
@@ -54,7 +59,7 @@ class YoloDetectNode(Node):
         return np.expand_dims(img_in, 0), scale
 
     def run(self):
-        prev_time = time.time()   # 初始化放在循环外面，修复变量报错
+        prev_time = time.time()  
         while rclpy.ok():
             ret, frame = self.cap.read()
             if not ret:
@@ -80,6 +85,7 @@ class YoloDetectNode(Node):
                 scores_list.append(conf)
                 clsid_list.append(cls_id)
 
+            pub_str = ""
             if len(boxes_list) > 0:
                 boxes_xyxy = self.xywh2xyxy(np.array(boxes_list))
                 keep = self.nms(boxes_xyxy, np.array(scores_list), IOU_THRESH)
@@ -98,10 +104,11 @@ class YoloDetectNode(Node):
                     cv2.putText(draw_img, f"{cname} {score:.2f}",
                                 (x1, y1 - 6), cv2.FONT_HERSHEY_SIMPLEX,
                                 0.5, (0, 255, 0), 1)
+                pub_str = ";".join(pub_str_list)
                 msg = String()
                 msg.data = ";".join(pub_str_list)
                 self.pub.publish(msg)
-                self.get_logger().info(f"发布:{msg.data}")
+                # self.get_logger().info(f"发布:{msg.data}") 不要打印提速
             else:
                 self.pub.publish(String(data=""))
 
@@ -117,7 +124,6 @@ class YoloDetectNode(Node):
             cv2.waitKey(1)
 
             rclpy.spin_once(self, timeout_sec=0.01)
-            time.sleep(0.1)
 
 def main(args=None):
     rclpy.init(args=args)
