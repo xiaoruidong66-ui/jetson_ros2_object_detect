@@ -18,12 +18,21 @@ class YoloDetectNode(Node):
         super().__init__("yolo_detect_node")
         self.pub = self.create_publisher(String, "/yolo_detect_result", 10)
         
+        # 测距模块
+        self.real_height = {
+            "cup": 0.18,
+            "mouse": 0.04,
+            "glasses": 0.035
+        }
+        self.K = 120
+        
+        # CUDA的GPU降级
         self.session = ort.InferenceSession(ONNX_PATH, providers=["CUDAExecutionProvider"])
         self.input_name = self.session.get_inputs()[0].name
         self.output_name = self.session.get_outputs()[0].name
 
+        # 摄像头初始化
         self.cap = cv2.VideoCapture("/dev/video0")
-        # 摄像头硬件参数优化，降低分辨率提帧
         self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
         self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
         self.cap.set(cv2.CAP_PROP_FPS, 30)
@@ -32,6 +41,7 @@ class YoloDetectNode(Node):
             self.get_logger().error("摄像头打开失败")
             raise SystemExit(1)
 
+    #坐标yolo模式转换
     def xywh2xyxy(self, x):
         y = np.copy(x)
         y[..., 0] = x[..., 0] - x[..., 2] / 2
@@ -48,6 +58,7 @@ class YoloDetectNode(Node):
         indices = cv2.dnn.NMSBoxes(bboxes_nms, scores.tolist(), 0, iou_thr)
         return indices.flatten() if len(indices) > 0 else []
 
+    # 图片的预处理
     def preprocess(self, img):
         h, w = img.shape[:2]
         scale = min(INPUT_SIZE / h, INPUT_SIZE / w)
@@ -58,6 +69,15 @@ class YoloDetectNode(Node):
         img_in = img_in[..., ::-1].transpose(2, 0, 1).astype(np.float32) / 255.0
         return np.expand_dims(img_in, 0), scale
 
+    # 估算距离 利用置信度框进行估算
+    def estimate_distance(self, obj_name, box_h_pixel):
+    if obj_name not in self.real_height:
+        return -1.0
+    if box_h_pixel < 5:
+        return -1.0
+    dist = self.K / box_h_pixel
+    return round(dist, 2)
+   
     def run(self):
         prev_time = time.time()  
         while rclpy.ok():
@@ -110,7 +130,9 @@ class YoloDetectNode(Node):
                 self.pub.publish(msg)
                 # self.get_logger().info(f"发布:{msg.data}") 不要打印提速
             else:
-                self.pub.publish(String(data=""))
+                msg = String()
+                msg.data = ""
+                self.pub.publish(msg)
 
             # FPS计算
             curr_time = time.time()
@@ -118,12 +140,11 @@ class YoloDetectNode(Node):
             prev_time = curr_time
             cv2.putText(draw_img, f"FPS:{fps:.1f}", (10, 30),
                         cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-
-            # X11弹窗核心
             cv2.imshow("YOLO Detect", draw_img)
             cv2.waitKey(1)
 
             rclpy.spin_once(self, timeout_sec=0.01)
+            # 删掉 time.sleep(0.1) 为了让fps更稳定
 
 def main(args=None):
     rclpy.init(args=args)
