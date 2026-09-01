@@ -20,8 +20,10 @@ YOLOv5原始源码不在本仓库，请自行下载官方YOLOv5。
 
 2\. Python依赖按照YOLOv5官方requirements.txt安装
 
-3\. 训练权重best.pt
-
+3\. 训练权重best.pt，格式转化为best.onnx
+   通过网盘分享的文件：best.onnx
+   链接: https://pan.baidu.com/s/1imnxJy-LnaYg68R-gIWFSg 提取码: 1234
+  
 
 
 \## 目录结构
